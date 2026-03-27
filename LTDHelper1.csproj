@@ -4,7 +4,7 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <RuntimeIdentifier>win-x86</RuntimeIdentifier>
     <StartupObject>LTDHelper.SingleInstance</StartupObject>
     <RootNamespace>LTDHelper</RootNamespace>
     <AssemblyName>LTDHelper</AssemblyName>
