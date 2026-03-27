@@ -35,6 +35,12 @@ public partial class MainWindow : Window, IComponentConnector
 
 	public bool TaskCanBeStopped;
 
+	public bool WaitingForAmount;
+
+	public int PurchaseAmount;
+
+	public bool PendingImmediateBuy;
+
 	public virtual GeodeExtension Extension
 	{
 		[CompilerGenerated]
@@ -102,6 +108,9 @@ public partial class MainWindow : Window, IComponentConnector
 		TestMode = false;
 		CatalogCategory = new string[2] { "ler", "set_mode" };
 		TaskCanBeStopped = true;
+		WaitingForAmount = false;
+		PurchaseAmount = 1;
+		PendingImmediateBuy = false;
 		InitializeComponent();
 	}
 
@@ -148,15 +157,20 @@ public partial class MainWindow : Window, IComponentConnector
 				Extension.SendToServerAsync(Extension.Out.GetCatalogPage, hCatalogNode2.PageId, -1, "NORMAL");
 				await Task.Delay(new Random().Next(500, 1000));
 				ConsoleBot.BotSendMessage(AppTranslator.TryingToBuy[CurrentLanguageInt]);
-				Extension.SendToServerAsync(Extension.Out.PurchaseFromCatalog, hCatalogNode2.PageId, hCatalogNode2.OfferIds[0], "", 1);
-				if (await Extension.WaitForPacketAsync(Extension.In.PurchaseOK, 2000) == null)
+				int purchaseAttempts = PurchaseAmount;
+				for (int i = 0; i < purchaseAttempts; i++)
 				{
-					throw new Exception("LTD not purchased!");
+					Extension.SendToServerAsync(Extension.Out.PurchaseFromCatalog, hCatalogNode2.PageId, hCatalogNode2.OfferIds[0], "", 1);
+					if (await Extension.WaitForPacketAsync(Extension.In.PurchaseOK, 2000) == null)
+					{
+						throw new Exception("LTD not purchased!");
+					}
+					ConsoleBot.BotSendMessage(AppTranslator.PurchaseOK[CurrentLanguageInt]);
+					await Task.Delay(new Random().Next(300, 700));
 				}
-				ConsoleBot.BotSendMessage(AppTranslator.PurchaseOK[CurrentLanguageInt]);
-				TaskBlocked = true;
 				TaskStarted = false;
-				ConsoleBot.BotSendMessage(AppTranslator.ExitAdvice[CurrentLanguageInt]);
+				TaskBlocked = false;
+				ConsoleBot.BotSendMessage(AppTranslator.StoppedMessage[CurrentLanguageInt]);
 			}
 			catch (Exception projectError)
 			{
@@ -194,6 +208,26 @@ public partial class MainWindow : Window, IComponentConnector
 	{
 		if (!TaskBlocked)
 		{
+			if (WaitingForAmount)
+			{
+				if (int.TryParse(e.Trim(), out int amount) && amount >= 1 && amount <= 10)
+				{
+					WaitingForAmount = false;
+					PurchaseAmount = amount;
+					ConsoleBot.BotSendMessage(AppTranslator.StartedMessage[CurrentLanguageInt]);
+					TaskStarted = true;
+					if (PendingImmediateBuy)
+					{
+						PendingImmediateBuy = false;
+						TryToBuyLTD();
+					}
+				}
+				else
+				{
+					ConsoleBot.BotSendMessage(AppTranslator.InvalidAmount[CurrentLanguageInt]);
+				}
+				return;
+			}
 			switch (e.ToLower())
 			{
 			case "/test":
@@ -201,10 +235,10 @@ public partial class MainWindow : Window, IComponentConnector
 			case "/testar":
 				if (!TaskStarted)
 				{
-					ConsoleBot.BotSendMessage(AppTranslator.StartedMessage[CurrentLanguageInt]);
 					TestMode = true;
-					TaskStarted = true;
-					TryToBuyLTD();
+					PendingImmediateBuy = true;
+					WaitingForAmount = true;
+					ConsoleBot.BotSendMessage(AppTranslator.AskAmount[CurrentLanguageInt]);
 				}
 				else
 				{
@@ -216,10 +250,10 @@ public partial class MainWindow : Window, IComponentConnector
 			case "/forçar":
 				if (!TaskBlocked & TaskCanBeStopped)
 				{
-					ConsoleBot.BotSendMessage(AppTranslator.StartedMessage[CurrentLanguageInt]);
 					TestMode = false;
-					TaskStarted = true;
-					TryToBuyLTD();
+					PendingImmediateBuy = true;
+					WaitingForAmount = true;
+					ConsoleBot.BotSendMessage(AppTranslator.AskAmount[CurrentLanguageInt]);
 				}
 				else
 				{
@@ -231,9 +265,10 @@ public partial class MainWindow : Window, IComponentConnector
 			case "/começar":
 				if (!TaskStarted)
 				{
-					ConsoleBot.BotSendMessage(AppTranslator.StartedMessage[CurrentLanguageInt]);
 					TestMode = false;
-					TaskStarted = true;
+					PendingImmediateBuy = false;
+					WaitingForAmount = true;
+					ConsoleBot.BotSendMessage(AppTranslator.AskAmount[CurrentLanguageInt]);
 				}
 				else
 				{

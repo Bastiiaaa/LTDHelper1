@@ -31,4 +31,8 @@ public class AppTranslator
 	public static string[] CatalogUpdateReceived = new string[3] { "[Catalog update received]", "[Actualizacion del catalogo recibida]", "[Atualização do catálogo recebida]" };
 
 	public static string[] StopFailed = new string[3] { "Task cannot be stopped right now!", "La tarea no puede detenerse ahora!", "A tarefa não pode ser parada no momento!" };
+
+	public static string[] AskAmount = new string[3] { "How many units? (1-10)", "Cuantas unidades? (1-10)", "Quantas unidades? (1-10)" };
+
+	public static string[] InvalidAmount = new string[3] { "Invalid amount, enter a number between 1 and 10.", "Cantidad invalida, ingresa un numero entre 1 y 10.", "Quantidade invalida, insira um numero entre 1 e 10." };
 }
